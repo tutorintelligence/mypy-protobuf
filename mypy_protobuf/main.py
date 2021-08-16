@@ -166,14 +166,14 @@ class PkgWriter(object):
             tuple(location.path): location for location in fd.source_code_info.location
         }
 
-    def _import(self, path: str, name: str) -> str:
+    def _import(self, path: str, name: str, alias: Optional[str] = None) -> str:
         """Imports a stdlib path and returns a handle to it
         eg. self._import("typing", "Optional") -> "Optional"
         """
         imp = path.replace("/", ".")
         if self.readable_stubs:
-            self.from_imports[imp].add((name, None))
-            return name
+            self.from_imports[imp].add((name, alias))
+            return alias or name
         else:
             self.imports.add(imp)
             return imp + "." + name
