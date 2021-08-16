@@ -688,8 +688,7 @@ class PkgWriter(object):
             self._import_message(method.output_type),
             self._import("typing", "Awaitable"),
             self._import_message(method.output_type),
-        ),
-        result = self._import_message(method.output_type) # TODO
+        )
         if use_stream_iterator and method.server_streaming:
             result = "{}[{}]".format(self._import("typing", "Iterator"), result)
         return result
