@@ -166,14 +166,14 @@ class PkgWriter(object):
             tuple(location.path): location for location in fd.source_code_info.location
         }
 
-    def _import(self, path: str, name: str) -> str:
+    def _import(self, path: str, name: str, alias: Optional[str] = None) -> str:
         """Imports a stdlib path and returns a handle to it
         eg. self._import("typing", "Optional") -> "Optional"
         """
         imp = path.replace("/", ".")
         if self.readable_stubs:
-            self.from_imports[imp].add((name, None))
-            return name
+            self.from_imports[imp].add((name, alias))
+            return alias or name
         else:
             self.imports.add(imp)
             return imp + "." + name
@@ -683,7 +683,12 @@ class PkgWriter(object):
     def _output_type(
         self, method: d.MethodDescriptorProto, use_stream_iterator: bool = True
     ) -> str:
-        result = self._import_message(method.output_type)
+        result = "{}[{}, {}[{}]]".format(
+            self._import("typing", "Union"),
+            self._import_message(method.output_type),
+            self._import("typing", "Awaitable"),
+            self._import_message(method.output_type),
+        )
         if use_stream_iterator and method.server_streaming:
             result = "{}[{}]".format(self._import("typing", "Iterator"), result)
         return result
@@ -776,7 +781,11 @@ class PkgWriter(object):
                 "def add_{}Servicer_to_server(servicer: {}Servicer, server: {}) -> None: ...",
                 service.name,
                 service.name,
-                self._import("grpc", "Server"),
+                "{}[{}, {}]".format(
+                    self._import("typing", "Union"),
+                    self._import("grpc", "Server"),
+                    self._import("grpc.aio", "Server", "AioServer"),
+                ),
             )
             l("")
 
